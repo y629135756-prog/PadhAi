@@ -142,7 +142,7 @@ input:checked + .slider:before { transform: translateX(24px); }
 }
 
 .pop-glow-card {
-    width: 50%; /* Desktop par AI card ki tarah 50% width */
+    width: 100%; /* Desktop par AI card ki tarah 50% width */
     background: var(--card-bg);
     border: 1px solid var(--border);
     border-radius: 25px; /* High Curved */
@@ -177,3 +177,4 @@ input:checked + .slider:before { transform: translateX(24px); }
 @media (max-width: 768px) {
     .pop-glow-card { width: 90%; }
 }
+
