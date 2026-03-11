@@ -42,7 +42,6 @@
 
         .subject-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }
         
-        /* Green Selected State */
         .subject-card.selected {
             border-color: var(--primary);
             background: #f0fdf4;
@@ -51,13 +50,7 @@
 
         #solution-content ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1rem; }
         #solution-content ol { list-style-type: decimal; padding-left: 1.5rem; margin-bottom: 1rem; }
-        #solution-content p { margin-bottom: 1rem; line-height: 1.6; }
-        
-        /* Ensure result area is clean */
-        .result-card {
-            background: white;
-            border: 1px solid #e2e8f0;
-        }
+        #solution-content p { margin-bottom: 1.2rem; line-height: 1.6; }
     </style>
 </head>
 <body class="p-0 m-0">
@@ -83,7 +76,7 @@
             </div>
         </div>
         <div class="absolute bottom-6 left-6 text-xs text-gray-400">
-            Version 1.2 • Model: Gemini 1.5 Flash
+            Version 2.0 • Engine: ChatGPT-42
         </div>
     </aside>
 
@@ -152,14 +145,12 @@
     </main>
 
     <script>
-        // UPDATED API CONFIGURATION
-        const API_KEY = "AIzaSyD8GYESFDOSjL7t3G6i7eSIHsMg6SXiVIc";
-        const MODEL = "gemini-1.5-flash"; // Corrected Model Name
-        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`;
+        // RAPIDAPI CONFIGURATION
+        const RAPID_API_KEY = "YOUR_RAPIDAPI_KEY_HERE"; // PASTE YOUR KEY HERE
+        const API_URL = "https://chatgpt-42.p.rapidapi.com/conversationgpt4-2";
 
         let currentSubject = "General";
         let imageBase64 = null;
-        let imageType = null;
 
         function toggleSidebar() {
             const sb = document.getElementById('sidebar');
@@ -179,16 +170,15 @@
         inputEl.addEventListener('input', validate);
 
         function validate() {
-            document.getElementById('submit-btn').disabled = !(inputEl.value.trim() || imageBase64);
+            document.getElementById('submit-btn').disabled = !(inputEl.value.trim());
         }
 
         function previewImage(e) {
             const file = e.target.files[0];
             if(!file) return;
-            imageType = file.type;
             const reader = new FileReader();
             reader.onload = (ev) => {
-                imageBase64 = ev.target.result.split(',')[1];
+                imageBase64 = ev.target.result;
                 document.getElementById('img-render').src = ev.target.result;
                 document.getElementById('preview-box').classList.remove('hidden');
                 validate();
@@ -219,43 +209,52 @@
             const tone = document.getElementById('pref-tone').value;
             const lang = document.getElementById('pref-lang').value;
 
-            const systemPrompt = `Act as AR Solver. Subject: ${currentSubject}. Tone: ${tone}. Language: ${lang}. 
-            Provide step-by-step explanations. Transcribe images if present. Use Google Search for accuracy. 
-            Do not use LaTeX delimiters. Format with Markdown. Ensure clarity for students.`;
-
-            const parts = [{ text: "Student Question: " + inputEl.value }];
-            if(imageBase64) {
-                parts.push({ inline_data: { mime_type: imageType, data: imageBase64 } });
-            }
+            // System instructions converted for this API
+            const systemPrompt = `Act as AR Solver (a student assistant). 
+            Current Subject: ${currentSubject}. 
+            Required Tone: ${tone}. 
+            Response Language: ${lang}. 
+            Provide step-by-step explanations. Use Markdown for formatting. 
+            Keep it clear and accurate.`;
 
             const payload = {
-                contents: [{ role: "user", parts }],
-                tools: [{ google_search: {} }],
-                systemInstruction: { parts: [{ text: systemPrompt }] },
-                generationConfig: { 
-                    temperature: 0.2,
-                    topP: 0.95,
-                    maxOutputTokens: 2048
-                }
+                messages: [
+                    { 
+                        role: "user", 
+                        content: `Subject: ${currentSubject}. Question: ${inputEl.value}` 
+                    }
+                ],
+                system_prompt: systemPrompt,
+                temperature: 0.7,
+                top_k: 5,
+                top_p: 0.9,
+                max_tokens: 1024,
+                web_access: false
             };
 
             try {
                 const response = await fetch(API_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-rapidapi-host': 'chatgpt-42.p.rapidapi.com',
+                        'x-rapidapi-key': RAPID_API_KEY
+                    },
                     body: JSON.stringify(payload)
                 });
 
                 const data = await response.json();
-                if(!response.ok) throw new Error(data.error?.message || "API Error: Please check your configuration.");
-
-                const answer = data.candidates[0].content.parts[0].text;
+                
+                // RapidAPI ChatGPT-42 usually returns result in "result" field
+                if (data.status === false) throw new Error(data.msg || "API Error");
+                
+                const answer = data.result || "No response received from AI.";
                 document.getElementById('solution-content').innerHTML = parseMarkdown(answer);
                 resultArea.classList.remove('hidden');
                 resultArea.scrollIntoView({ behavior: 'smooth' });
 
             } catch (err) {
-                errorBox.innerText = "Error: " + err.message;
+                errorBox.innerText = "Error: " + err.message + ". Please ensure your RapidAPI Key is valid.";
                 errorBox.classList.remove('hidden');
             } finally {
                 btn.disabled = false;
