@@ -15,7 +15,7 @@
 
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #ffffff; /* Strictly White Background */
+            background-color: #ffffff !important; /* Strictly White */
             color: #1e293b;
             min-height: 100vh;
         }
@@ -52,6 +52,12 @@
         #solution-content ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1rem; }
         #solution-content ol { list-style-type: decimal; padding-left: 1.5rem; margin-bottom: 1rem; }
         #solution-content p { margin-bottom: 1rem; line-height: 1.6; }
+        
+        /* Ensure result area is clean */
+        .result-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+        }
     </style>
 </head>
 <body class="p-0 m-0">
@@ -65,11 +71,11 @@
         <div class="space-y-6">
             <div>
                 <label class="block text-sm font-medium mb-2">Language</label>
-                <input type="text" id="pref-lang" value="English" class="w-full p-2 border rounded-lg">
+                <input type="text" id="pref-lang" value="English" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-green-500">
             </div>
             <div>
                 <label class="block text-sm font-medium mb-2">Response Tone</label>
-                <select id="pref-tone" class="w-full p-2 border rounded-lg">
+                <select id="pref-tone" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-green-500">
                     <option value="Encouraging">Encouraging 🌟</option>
                     <option value="Formal">Formal 🎓</option>
                     <option value="Simple">Simple 👶</option>
@@ -77,13 +83,13 @@
             </div>
         </div>
         <div class="absolute bottom-6 left-6 text-xs text-gray-400">
-            Version 1.2 • Model: Gemini 2.5 Flash
+            Version 1.2 • Model: Gemini 1.5 Flash
         </div>
     </aside>
 
     <main class="max-w-4xl mx-auto px-4 py-8">
         <header class="flex items-center justify-between mb-8">
-            <button onclick="toggleSidebar()" class="p-2 bg-gray-50 border rounded-lg shadow-sm">☰</button>
+            <button onclick="toggleSidebar()" class="p-2 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50">☰</button>
             <div class="text-center">
                 <h1 class="text-3xl font-black bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">CF Solver</h1>
                 <p class="text-xs text-gray-400 uppercase tracking-widest font-bold">Intelligent Homework Assistant</p>
@@ -113,16 +119,16 @@
         </div>
         <p id="subject-indicator" class="text-center text-green-600 font-bold text-sm mb-8">Selected: General ✨</p>
 
-        <div class="bg-white rounded-3xl border border-gray-100 shadow-xl p-6 mb-6">
+        <div class="bg-white rounded-3xl border border-gray-200 shadow-lg p-6 mb-6">
             <h3 class="font-bold mb-4">Ask a Question ✍️</h3>
-            <textarea id="user-input" rows="4" class="w-full p-4 bg-gray-50 rounded-xl mb-4 outline-none focus:ring-2 focus:ring-green-500 transition-all" placeholder="Describe your problem..."></textarea>
+            <textarea id="user-input" rows="4" class="w-full p-4 bg-gray-50 rounded-xl mb-4 outline-none focus:ring-2 focus:ring-green-500 transition-all border border-gray-100" placeholder="Describe your problem..."></textarea>
             
             <div class="flex flex-col md:flex-row gap-4">
-                <label class="flex-1 flex items-center justify-center gap-2 p-3 bg-green-50 text-green-700 rounded-xl cursor-pointer font-semibold border border-green-100">
+                <label class="flex-1 flex items-center justify-center gap-2 p-3 bg-green-50 text-green-700 rounded-xl cursor-pointer font-semibold border border-green-100 hover:bg-green-100 transition-colors">
                     <span>📷 Upload Image</span>
                     <input type="file" id="image-upload" hidden onchange="previewImage(event)">
                 </label>
-                <button id="submit-btn" disabled onclick="solve()" class="flex-1 p-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold disabled:opacity-50 flex items-center justify-center gap-2 transition-all">
+                <button id="submit-btn" disabled onclick="solve()" class="flex-1 p-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold disabled:opacity-50 flex items-center justify-center gap-2 transition-all shadow-md active:scale-95">
                     <span id="btn-text">Get Solution Instantly</span>
                     <div id="loader" class="loader hidden"></div>
                 </button>
@@ -135,18 +141,20 @@
         </div>
 
         <div id="error-box" class="hidden p-4 bg-red-50 text-red-700 rounded-xl mb-6 border border-red-100"></div>
-        <div id="result-area" class="hidden bg-white rounded-3xl border border-gray-100 shadow-xl overflow-hidden">
+        
+        <div id="result-area" class="hidden bg-white rounded-3xl border border-gray-200 shadow-xl overflow-hidden mb-8">
             <div class="bg-green-600 p-4 text-white font-bold flex items-center gap-2">
                 <span>AI Solution</span>
                 <span class="text-green-200">💡</span>
             </div>
-            <div id="solution-content" class="p-6 text-gray-800"></div>
+            <div id="solution-content" class="p-6 text-gray-800 bg-white"></div>
         </div>
     </main>
 
     <script>
+        // UPDATED API CONFIGURATION
         const API_KEY = "AIzaSyAHOAQ87chOQYuSZthaMNzX6NBIakoU84A";
-        const MODEL = "gemini-2.5-flash-preview-09-2025";
+        const MODEL = "gemini-1.5-flash"; // Corrected Model Name
         const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`;
 
         let currentSubject = "General";
@@ -213,7 +221,7 @@
 
             const systemPrompt = `Act as AR Solver. Subject: ${currentSubject}. Tone: ${tone}. Language: ${lang}. 
             Provide step-by-step explanations. Transcribe images if present. Use Google Search for accuracy. 
-            Do not use LaTeX delimiters. Format with Markdown.`;
+            Do not use LaTeX delimiters. Format with Markdown. Ensure clarity for students.`;
 
             const parts = [{ text: "Student Question: " + inputEl.value }];
             if(imageBase64) {
@@ -224,7 +232,11 @@
                 contents: [{ role: "user", parts }],
                 tools: [{ google_search: {} }],
                 systemInstruction: { parts: [{ text: systemPrompt }] },
-                generationConfig: { temperature: 0.2 }
+                generationConfig: { 
+                    temperature: 0.2,
+                    topP: 0.95,
+                    maxOutputTokens: 2048
+                }
             };
 
             try {
@@ -235,7 +247,7 @@
                 });
 
                 const data = await response.json();
-                if(!response.ok) throw new Error(data.error?.message || "API Error");
+                if(!response.ok) throw new Error(data.error?.message || "API Error: Please check your configuration.");
 
                 const answer = data.candidates[0].content.parts[0].text;
                 document.getElementById('solution-content').innerHTML = parseMarkdown(answer);
