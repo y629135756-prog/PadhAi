@@ -8,16 +8,34 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #6366f1;
-            --primary-dark: #4f46e5;
-            --secondary: #a855f7;
+            --primary: #22c55e; /* Green-500 */
+            --primary-dark: #16a34a; /* Green-600 */
+            --secondary: #10b981;
+            --bg-dark: #000000;
+            --bg-light: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
         }
 
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-            min-height: 100vh;
+            transition: background 0.3s ease, color 0.3s ease;
         }
+
+        /* Dark Mode (Default) */
+        body.dark {
+            background: var(--bg-dark);
+            color: #ffffff;
+        }
+        body.dark .subject-card { background: rgba(31, 41, 55, 0.7); color: white; border-color: transparent; }
+        body.dark .bg-white { background-color: #111827; color: white; }
+        body.dark textarea { background-color: #1f2937; color: white; }
+        body.dark #solution-content { color: #e5e7eb; }
+
+        /* Light Mode */
+        body.light {
+            background: var(--bg-light);
+            color: #1e293b;
+        }
+        body.light .subject-card { background: rgba(255, 255, 255, 0.7); color: #1e293b; }
 
         .sidebar-transition { transition: transform 0.3s ease-in-out; }
         
@@ -36,17 +54,14 @@
             transition: all 0.2s ease;
             cursor: pointer;
             border: 2px solid transparent;
-            background: rgba(255, 255, 255, 0.7);
             backdrop-filter: blur(10px);
         }
 
-        .subject-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        .subject-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); }
         
-        /* Fixed Selected State */
         .subject-card.selected {
             border-color: var(--primary);
-            background: white;
-            box-shadow: 0 0 15px rgba(99, 102, 241, 0.3);
+            box-shadow: 0 0 15px rgba(34, 197, 94, 0.4);
         }
 
         #solution-content ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1rem; }
@@ -54,11 +69,10 @@
         #solution-content p { margin-bottom: 1rem; line-height: 1.6; }
     </style>
 </head>
-<body class="p-0 m-0">
-   
+<body class="p-0 m-0 dark"> <!-- Set dark as default -->
 
     <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="toggleSidebar()"></div>
-    <aside id="sidebar" class="fixed top-0 left-0 h-full w-[80%] md:w-80 bg-white z-50 shadow-2xl transform -translate-x-full sidebar-transition p-6">
+    <aside id="sidebar" class="fixed top-0 left-0 h-full w-[80%] md:w-80 bg-white dark:bg-gray-900 z-50 shadow-2xl transform -translate-x-full sidebar-transition p-6">
         <div class="flex justify-between items-center mb-8">
             <h2 class="text-xl font-bold">Settings</h2>
             <button onclick="toggleSidebar()" class="text-gray-500">✕</button>
@@ -66,11 +80,18 @@
         <div class="space-y-6">
             <div>
                 <label class="block text-sm font-medium mb-2">Language</label>
-                <input type="text" id="pref-lang" value="English" class="w-full p-2 border rounded-lg">
+                <input type="text" id="pref-lang" value="English" class="w-full p-2 border rounded-lg dark:bg-gray-800 dark:border-gray-700">
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-2">Theme Mode</label>
+                <select id="pref-theme" onchange="changeTheme(this.value)" class="w-full p-2 border rounded-lg dark:bg-gray-800 dark:border-gray-700">
+                    <option value="dark">Dark Mode 🌙</option>
+                    <option value="light">Light Mode ☀️</option>
+                </select>
             </div>
             <div>
                 <label class="block text-sm font-medium mb-2">Response Tone</label>
-                <select id="pref-tone" class="w-full p-2 border rounded-lg">
+                <select id="pref-tone" class="w-full p-2 border rounded-lg dark:bg-gray-800 dark:border-gray-700">
                     <option value="Encouraging">Encouraging 🌟</option>
                     <option value="Formal">Formal 🎓</option>
                     <option value="Simple">Simple 👶</option>
@@ -84,9 +105,9 @@
 
     <main class="max-w-4xl mx-auto px-4 py-8">
         <header class="flex items-center justify-between mb-8">
-            <button onclick="toggleSidebar()" class="p-2 bg-white rounded-lg shadow-sm">☰</button>
+            <button onclick="toggleSidebar()" class="p-2 bg-white dark:bg-gray-800 rounded-lg shadow-sm">☰</button>
             <div class="text-center">
-                <h1 class="text-3xl font-black bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">CF Solver</h1>
+                <h1 class="text-3xl font-black bg-gradient-to-r from-green-400 to-emerald-600 bg-clip-text text-transparent">CF Solver</h1>
                 <p class="text-xs text-gray-500 uppercase tracking-widest">Intelligent Homework Assistant</p>
             </div>
             <div class="w-8"></div>
@@ -112,18 +133,18 @@
                 <div class="text-2xl mb-1">✨</div><div class="font-bold text-sm">General</div>
             </div>
         </div>
-        <p id="subject-indicator" class="text-center text-indigo-600 font-bold text-sm mb-8">Selected: General ✨</p>
+        <p id="subject-indicator" class="text-center text-green-500 font-bold text-sm mb-8">Selected: General ✨</p>
 
         <div class="bg-white rounded-3xl shadow-xl p-6 mb-6">
             <h3 class="font-bold mb-4">Ask a Question ✍️</h3>
-            <textarea id="user-input" rows="4" class="w-full p-4 bg-gray-50 rounded-xl mb-4 outline-none focus:ring-2 focus:ring-indigo-500 transition-all" placeholder="Describe your problem..."></textarea>
+            <textarea id="user-input" rows="4" class="w-full p-4 bg-gray-50 rounded-xl mb-4 outline-none focus:ring-2 focus:ring-green-500 transition-all" placeholder="Describe your problem..."></textarea>
             
             <div class="flex flex-col md:flex-row gap-4">
-                <label class="flex-1 flex items-center justify-center gap-2 p-3 bg-indigo-50 text-indigo-700 rounded-xl cursor-pointer font-semibold">
+                <label class="flex-1 flex items-center justify-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 text-green-600 rounded-xl cursor-pointer font-semibold">
                     <span>📷 Upload Image</span>
                     <input type="file" id="image-upload" hidden onchange="previewImage(event)">
                 </label>
-                <button id="submit-btn" disabled onclick="solve()" class="flex-1 p-3 bg-indigo-600 text-white rounded-xl font-bold disabled:opacity-50 flex items-center justify-center gap-2">
+                <button id="submit-btn" disabled onclick="solve()" class="flex-1 p-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold disabled:opacity-50 flex items-center justify-center gap-2 transition-colors">
                     <span id="btn-text">Get Solution Instantly</span>
                     <div id="loader" class="loader hidden"></div>
                 </button>
@@ -137,8 +158,8 @@
 
         <div id="error-box" class="hidden p-4 bg-red-50 text-red-700 rounded-xl mb-6 border border-red-100"></div>
         <div id="result-area" class="hidden bg-white rounded-3xl shadow-xl overflow-hidden animate-in fade-in">
-            <div class="bg-indigo-600 p-4 text-white font-bold">AI Solution 💡</div>
-            <div id="solution-content" class="p-6 text-gray-800"></div>
+            <div class="bg-green-600 p-4 text-white font-bold">AI Solution 💡</div>
+            <div id="solution-content" class="p-6"></div>
         </div>
     </main>
 
@@ -158,6 +179,16 @@
             const ov = document.getElementById('sidebar-overlay');
             sb.classList.toggle('-translate-x-full');
             ov.classList.toggle('hidden');
+        }
+
+        function changeTheme(theme) {
+            if (theme === 'light') {
+                document.body.classList.remove('dark');
+                document.body.classList.add('light');
+            } else {
+                document.body.classList.remove('light');
+                document.body.classList.add('dark');
+            }
         }
 
         function selectSubject(name, emoji, el) {
@@ -203,7 +234,6 @@
             const errorBox = document.getElementById('error-box');
             const resultArea = document.getElementById('result-area');
 
-            // Reset UI
             errorBox.classList.add('hidden');
             resultArea.classList.add('hidden');
             btn.disabled = true;
@@ -263,6 +293,5 @@
                     .split('\n\n').map(p => `<p>${p}</p>`).join('');
         }
     </script>
-
 </body>
 </html>
