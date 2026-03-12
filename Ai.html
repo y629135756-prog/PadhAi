@@ -76,7 +76,7 @@
             </div>
         </div>
         <div class="absolute bottom-6 left-6 text-xs text-gray-400">
-            Version 2.0 • Engine: ChatGPT-42
+            Version 2.0 • Engine: Gemini 3.1 Flash Lite
         </div>
     </aside>
 
@@ -145,9 +145,9 @@
     </main>
 
     <script>
-        // RAPIDAPI CONFIGURATION
-        const RAPID_API_KEY = "YOUR_RAPIDAPI_KEY_HERE"; // PASTE YOUR KEY HERE
-        const API_URL = "https://chatgpt-42.p.rapidapi.com/conversationgpt4-2";
+        // GEMINI API CONFIGURATION
+        const API_KEY = "AIzaSyAdrjFK8HDlfHkYfzZlVe9qRNdoU7_63bI";
+        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${API_KEY}`;
 
         let currentSubject = "General";
         let imageBase64 = null;
@@ -209,7 +209,6 @@
             const tone = document.getElementById('pref-tone').value;
             const lang = document.getElementById('pref-lang').value;
 
-            // System instructions converted for this API
             const systemPrompt = `Act as AR Solver (a student assistant). 
             Current Subject: ${currentSubject}. 
             Required Tone: ${tone}. 
@@ -217,44 +216,61 @@
             Provide step-by-step explanations. Use Markdown for formatting. 
             Keep it clear and accurate.`;
 
+            const fullPrompt = `${systemPrompt}\n\nQuestion: ${inputEl.value}`;
+            let requestParts = [{ text: fullPrompt }];
+
+            // If an image was uploaded, attach it to the Gemini Request
+            if (imageBase64) {
+                const matches = imageBase64.match(/^data:(image\/[a-zA-Z+]+);base64,(.+)$/);
+                if (matches && matches.length === 3) {
+                    requestParts.push({
+                        inline_data: {
+                            mime_type: matches[1],
+                            data: matches[2]
+                        }
+                    });
+                }
+            }
+
             const payload = {
-                messages: [
-                    { 
-                        role: "user", 
-                        content: `Subject: ${currentSubject}. Question: ${inputEl.value}` 
-                    }
-                ],
-                system_prompt: systemPrompt,
-                temperature: 0.7,
-                top_k: 5,
-                top_p: 0.9,
-                max_tokens: 1024,
-                web_access: false
+                contents: [{
+                    parts: requestParts
+                }],
+                generationConfig: {
+                    temperature: 0.7,
+                    topK: 40,
+                    topP: 0.95,
+                    maxOutputTokens: 2048,
+                }
             };
 
             try {
                 const response = await fetch(API_URL, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'x-rapidapi-host': 'chatgpt-42.p.rapidapi.com',
-                        'x-rapidapi-key': RAPID_API_KEY
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(payload)
                 });
 
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(`API Error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
+                }
+
                 const data = await response.json();
                 
-                // RapidAPI ChatGPT-42 usually returns result in "result" field
-                if (data.status === false) throw new Error(data.msg || "API Error");
+                if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+                    throw new Error("Invalid response received from AI.");
+                }
                 
-                const answer = data.result || "No response received from AI.";
+                const answer = data.candidates[0].content.parts[0].text;
                 document.getElementById('solution-content').innerHTML = parseMarkdown(answer);
                 resultArea.classList.remove('hidden');
                 resultArea.scrollIntoView({ behavior: 'smooth' });
 
             } catch (err) {
-                errorBox.innerText = "Error: " + err.message + ". Please ensure your RapidAPI Key is valid.";
+                errorBox.innerText = "Error: " + err.message + ". Please try again.";
                 errorBox.classList.remove('hidden');
             } finally {
                 btn.disabled = false;
